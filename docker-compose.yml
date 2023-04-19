@@ -1,0 +1,57 @@
+version: '3.4'
+
+services:
+  profile:
+    container_name: profile
+    build:
+      context: profile-service
+      dockerfile: Dockerfile
+    env_file:
+      - ./profile-service/.development.env
+    volumes:
+      - ./profile-service:/app
+      - /app/node_modules
+    ports:
+      - 7000:7000
+    depends_on:
+      - postgres
+      - rabbit
+    restart: always
+  user:
+    container_name: user
+    build:
+      context: user-service
+      dockerfile: Dockerfile
+    env_file:
+      - user-service/.development.env
+    volumes:
+      - ./user-service:/app
+      - /app/node_modules
+    ports:
+      - 5000:5000
+      - 9229:9229
+    depends_on:
+      - postgres
+      - rabbit
+    restart: always
+  postgres:
+    container_name: postgres
+    image: postgres:15
+    env_file:
+      - profile-service/.development.env
+    environment:
+      PG_DATA: /var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: always
+  rabbit:
+    hostname: rabbit
+    image: rabbitmq:3.6.1-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+
+volumes:
+  pgdata:
